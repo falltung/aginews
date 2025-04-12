@@ -4,6 +4,7 @@ import OpenAI from 'openai';
 import { Story } from '../types/story';
 import { Source } from '../types/source';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import fetch from 'node-fetch';
 
 dotenv.config();
 
@@ -13,19 +14,47 @@ const proxyConfig = {
   https: process.env.HTTPS_PROXY
 };
 
+console.log('Proxy configuration:', {
+  http: proxyConfig.http ? 'Configured' : 'Not configured',
+  https: proxyConfig.https ? 'Configured' : 'Not configured'
+});
+
+// 创建代理 agent
+const createProxyAgent = () => {
+  if (proxyConfig.https) {
+    console.log('Creating HTTPS proxy agent with:', proxyConfig.https);
+    return new HttpsProxyAgent(proxyConfig.https);
+  }
+  console.log('No proxy agent created');
+  return undefined;
+};
+
+// 设置全局 fetch 配置
+const agent = createProxyAgent();
+if (agent) {
+  console.log('Setting up global fetch with proxy agent');
+  // @ts-ignore
+  global.fetch = (url: string, options: any = {}) => {
+    console.log(`Making request to ${url} through proxy`);
+    return fetch(url, {
+      ...options,
+      agent,
+      timeout: 30000,
+      retry: {
+        retries: 3,
+        factor: 2,
+        minTimeout: 1000,
+        maxTimeout: 10000,
+      }
+    });
+  };
+} else {
+  console.log('Using direct connection (no proxy)');
+}
+
 // 配置 Firecrawl 客户端
 const app = new FirecrawlApp({
-  apiKey: process.env.FIRECRAWL_API_KEY,
-  // 如果配置了代理，使用代理
-  ...(proxyConfig.https ? {
-    fetch: (url: string, options: any) => {
-      const agent = new HttpsProxyAgent(proxyConfig.https!);
-      return fetch(url, {
-        ...options,
-        agent
-      });
-    }
-  } : {})
+  apiKey: process.env.FIRECRAWL_API_KEY
 });
 
 // 配置 OpenAI 客户端使用 OpenRouter
