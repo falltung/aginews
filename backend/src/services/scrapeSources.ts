@@ -3,11 +3,18 @@ import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { Story } from '../types/story';
 import { Source } from '../types/source';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 dotenv.config();
 
 const app = new FirecrawlApp({apiKey: process.env.FIRECRAWL_API_KEY});
 const fs = require('fs');
+
+// 配置代理
+const proxyConfig = {
+  http: process.env.HTTP_PROXY,
+  https: process.env.HTTPS_PROXY
+};
 
 // 配置 OpenAI 客户端使用 OpenRouter
 const client = new OpenAI({
@@ -16,7 +23,12 @@ const client = new OpenAI({
   defaultHeaders: {
     'HTTP-Referer': 'https://aginews.io', // 添加来源
     'X-Title': 'AGI News' // 添加应用名称
-  }
+  },
+  // 如果配置了代理，使用代理
+  ...(proxyConfig.https ? {
+    httpAgent: new HttpsProxyAgent(proxyConfig.https),
+    httpsAgent: new HttpsProxyAgent(proxyConfig.https)
+  } : {})
 });
 
 export async function scrapeSources(sources: Source[]): Promise<Story[]> {

@@ -56,7 +56,10 @@ export async function saveStories(stories: Story[]): Promise<void> {
     console.log('Attempting to save stories...');
     const { data, error } = await supabase
       .from('stories')
-      .upsert(stories)
+      .upsert(stories, {
+        onConflict: 'url',
+        ignoreDuplicates: true
+      })
       .select();
 
     if (error) {
