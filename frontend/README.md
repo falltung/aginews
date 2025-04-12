@@ -20,6 +20,30 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Project Configuration
+
+### Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_SECRET_KEY=your_supabase_secret_key
+RESEND_API_KEY=your_resend_api_key
+```
+
+### Database Setup
+
+The project uses Supabase as the database. You need to create the following table in your Supabase database:
+
+```sql
+CREATE TABLE public.users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

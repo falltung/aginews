@@ -26,6 +26,7 @@
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
     "firecrawl": "^1.7.2",
+    "https-proxy-agent": "^7.0.6",
     "node-cron": "^3.0.3",
     "openai": "^4.72.0",
     "resend": "^4.0.1-alpha.0",
