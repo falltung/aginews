@@ -2,11 +2,27 @@ import dotenv from 'dotenv';
 import { Resend } from 'resend';
 import { getSubscribersBatch } from './supabase';
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!);
+
+// 创建 SMTP 传输器
+const createSmtpTransporter = () => {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+};
+
+// 创建 Resend 客户端
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendNewsletter(newsletter: string, rawStories: string) {
   if (!newsletter || newsletter.length <= 500) {
@@ -53,16 +69,29 @@ export async function sendNewsletter(newsletter: string, rawStories: string) {
           throw new Error(`Invalid email format: ${subscriber.email}`);
         }
 
-        // 发送邮件
-        const result = await resend.emails.send({
-          from: 'AGI News <news@aginews.io>', // 使用已验证的域名
-          to: subscriber.email,
-          subject: 'AGI News – Your Quick Daily Roundup',
-          html: newsletter + `<br><br><a href="${unsubscribe_link}">Unsubscribe</a>`,
-        });
+        // 优先使用 SMTP
+        if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+          console.log('Using SMTP to send email...');
+          const transporter = createSmtpTransporter();
+          
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM || process.env.SMTP_USER,
+            to: subscriber.email,
+            subject: 'AGI News – Your Quick Daily Roundup',
+            html: newsletter + `<br><br><a href="${unsubscribe_link}">Unsubscribe</a>`,
+          });
+        } else if (process.env.RESEND_API_KEY) {
+          console.log('Using Resend to send email...');
+          await resend.emails.send({
+            from: 'AGI News <news@aginews.io>',
+            to: subscriber.email,
+            subject: 'AGI News – Your Quick Daily Roundup',
+            html: newsletter + `<br><br><a href="${unsubscribe_link}">Unsubscribe</a>`,
+          });
+        } else {
+          throw new Error('No email service configured. Please set up either SMTP or Resend.');
+        }
 
-        console.log(`Resend API response for ${subscriber.email}:`, result);
-        
         // 记录发送成功
         await supabase
           .from('newsletter_sends')
