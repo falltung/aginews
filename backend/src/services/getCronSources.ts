@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { Source } from '../types/source';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -6,7 +7,7 @@ dotenv.config();
 console.log('Connecting to Supabase with URL:', process.env.SUPABASE_URL);
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!);
 
-export async function getCronSources() {
+export async function getCronSources(): Promise<Source[]> {
   console.log("Fetching sources...")
   try {
     const { data: sources, error } = await supabase
@@ -27,7 +28,7 @@ export async function getCronSources() {
     }
 
     console.log(`Found ${sources.length} active sources:`, sources.map(s => s.url));
-    return sources.map(source => source.url);
+    return sources;
   } catch (error) {
     console.error('Error in getCronSources:', error);
     throw error;

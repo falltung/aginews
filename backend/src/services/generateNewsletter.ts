@@ -51,7 +51,11 @@ Prioritize stories that cover product launches, or timely insights relevant to d
 
     console.log(`Newsletter generated successfully with ${newsletterResponse.choices[0].message.content.length} characters.`);
 
-    return newsletterResponse.choices[0].message.content;
+    return {
+      title: 'AGI News – Your Quick Daily Roundup',
+      content: newsletterResponse.choices[0].message.content,
+      status: 'draft'
+    };
   } catch (error) {
     console.error('Error generating newsletter:', error);
     throw error; // 重新抛出错误以便上层处理
