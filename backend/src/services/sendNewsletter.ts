@@ -44,14 +44,24 @@ export async function sendNewsletter(newsletter: string, rawStories: string) {
 
     for (const subscriber of subscribers) {
       try {
+        console.log(`Preparing to send to ${subscriber.email}...`);
         const unsubscribe_link = `https://www.aginews.io/api/unsubscribe?email=${subscriber.email}`;
-       
-        await resend.emails.send({
-          from: 'Eric <eric@tryfirecrawl.com>',
+        
+        // 验证邮箱格式
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(subscriber.email)) {
+          throw new Error(`Invalid email format: ${subscriber.email}`);
+        }
+
+        // 发送邮件
+        const result = await resend.emails.send({
+          from: 'AGI News <news@aginews.io>', // 使用已验证的域名
           to: subscriber.email,
           subject: 'AGI News – Your Quick Daily Roundup',
           html: newsletter + `<br><br><a href="${unsubscribe_link}">Unsubscribe</a>`,
         });
+
+        console.log(`Resend API response for ${subscriber.email}:`, result);
         
         // 记录发送成功
         await supabase
@@ -64,7 +74,7 @@ export async function sendNewsletter(newsletter: string, rawStories: string) {
           });
 
         totalSent++;
-        console.log(`Sent to ${subscriber.email}`);
+        console.log(`Successfully sent to ${subscriber.email}`);
       } catch (error) {
         console.error(`Failed to send to ${subscriber.email}:`, error);
         

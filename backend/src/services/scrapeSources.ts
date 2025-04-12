@@ -7,14 +7,26 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 
 dotenv.config();
 
-const app = new FirecrawlApp({apiKey: process.env.FIRECRAWL_API_KEY});
-const fs = require('fs');
-
 // 配置代理
 const proxyConfig = {
   http: process.env.HTTP_PROXY,
   https: process.env.HTTPS_PROXY
 };
+
+// 配置 Firecrawl 客户端
+const app = new FirecrawlApp({
+  apiKey: process.env.FIRECRAWL_API_KEY,
+  // 如果配置了代理，使用代理
+  ...(proxyConfig.https ? {
+    fetch: (url: string, options: any) => {
+      const agent = new HttpsProxyAgent(proxyConfig.https!);
+      return fetch(url, {
+        ...options,
+        agent
+      });
+    }
+  } : {})
+});
 
 // 配置 OpenAI 客户端使用 OpenRouter
 const client = new OpenAI({
