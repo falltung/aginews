@@ -19,7 +19,7 @@ if (isDebugMode) {
 } else {
   console.log('Running in production mode (cron scheduled)');
   // 每天 UTC 时间 14:00 执行（对应北京时间 22:00） ：`0 14 * * *`
-  cron.schedule(`5 * * * *`, async () => {
+  cron.schedule(`5 12 * * *`, async () => {
     console.log(`Starting process to send newsletter...`);
     await handleCron();
   });
