@@ -18,8 +18,8 @@ if (isDebugMode) {
   main().catch(console.error);
 } else {
   console.log('Running in production mode (cron scheduled)');
-  // 每天 UTC 时间 14:00 执行（对应北京时间 22:00）
-  cron.schedule(`0 14 * * *`, async () => {
+  // 每天 UTC 时间 14:00 执行（对应北京时间 22:00） ：`0 14 * * *`
+  cron.schedule(`5 * * * *`, async () => {
     console.log(`Starting process to send newsletter...`);
     await handleCron();
   });
